@@ -8,9 +8,8 @@ class MyappConfig(AppConfig):
     name = 'modules.myapp'
 
     def ready(self):
-        # Only run in the actual server process (not the reloader parent)
         if os.environ.get('RUN_MAIN') == 'true':
-            from .services import TelemetrySimulator  # adjust import path
+            from .services import TelemetrySimulator 
 
             def start_simulator():
                 loop = asyncio.new_event_loop()

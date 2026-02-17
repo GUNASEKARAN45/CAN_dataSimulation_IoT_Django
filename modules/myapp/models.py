@@ -1,4 +1,3 @@
-# modules/myapp/models.py   ← FULL COPY-PASTE THIS FILE
 from django.db import models
 
 class TelemetryData(models.Model):
@@ -31,7 +30,7 @@ class EventLog(models.Model):
     ]
     event_type = models.CharField(max_length=20, choices=EVENT_CHOICES)
     timestamp = models.DateTimeField(auto_now_add=True)
-    details = models.JSONField(default=dict, blank=True)   # optional extra info
+    details = models.JSONField(default=dict, blank=True)   
 
     class Meta:
         ordering = ['-timestamp']

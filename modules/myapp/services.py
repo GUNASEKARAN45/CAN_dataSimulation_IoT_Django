@@ -11,7 +11,6 @@ from .state import SIMULATOR_STATE, state_lock
 
 class TelemetrySimulator:
     def __init__(self):
-        # Load latest values from DB so dashboard shows real last state
         try:
             latest = TelemetryData.objects.latest('timestamp')
             self.speed = float(latest.speed)
@@ -167,16 +166,16 @@ class TelemetrySimulator:
         )
     async def run(self):
       save_counter = 0
-      print("===== NEW SIMULATOR STARTED WITH 6-SECOND LOGIC =====")   # ← must see this
+      print("===== NEW SIMULATOR STARTED WITH 6-SECOND LOGIC =====")   
       while True:
         data = await self.generate_data()
         await self.send_via_websocket(data)
 
         save_counter += 1
-        print(f"Loop #{save_counter} → save? {save_counter % 6 == 1}")   # ← watch this
+        print(f"Loop #{save_counter} → save? {save_counter % 6 == 1}")   
 
         if save_counter % 6 == 1:
-            print(">>> SAVING TO DATABASE <<<")   # ← only this should appear every ~6s
+            print(">>> SAVING TO DATABASE <<<")   
             await self.save_to_db(data)
 
         await asyncio.sleep(1)

@@ -1,4 +1,3 @@
-// src/App.tsx   ← FULL COPY-PASTE THIS FILE
 import { useEffect, useState, useRef } from 'react';
 import type { TelemetryData } from '../types';
 import { useTelemetry } from "./hooks/useTelemetry";
@@ -27,7 +26,6 @@ function App() {
     }
   }, [liveData]);
 
-  // ==================== VEHICLE START / STOP ====================
   const handleMainAction = () => {
   if (liveData?.status === "running") {
     sendCommand("stop_vehicle");
@@ -55,7 +53,7 @@ const handleCharge = () => {
 
   const isRunning = liveData.status === "running";
   const isCharging = liveData.status === "charging";
-  const canStartVehicle = !isCharging;   // disable START button while charging
+  const canStartVehicle = !isCharging;   
 
   const batteryColor = liveData.battery > 30 ? "#22c55e" : liveData.battery > 15 ? "#f59e0b" : "#ef4444";
 
@@ -70,7 +68,6 @@ const handleCharge = () => {
       flexDirection: "column",
       gap: "24px"
     }}>
-      {/* Main Gauges - unchanged */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
@@ -79,7 +76,6 @@ const handleCharge = () => {
         margin: "0 auto",
         width: "100%"
       }}>
-        {/* Speed Gauge */}
         <div style={{ background: "#1e293b", borderRadius: "16px", padding: "20px", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
           <h3 style={{ textAlign: "center", marginBottom: "12px" }}>Speed</h3>
           <GaugeComponent
@@ -92,7 +88,6 @@ const handleCharge = () => {
           />
         </div>
 
-        {/* Battery Gauge */}
         <div style={{ background: "#1e293b", borderRadius: "16px", padding: "20px", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
           <h3 style={{ textAlign: "center", marginBottom: "12px" }}>Battery</h3>
           <GaugeComponent
@@ -111,7 +106,6 @@ const handleCharge = () => {
           </div>
         </div>
 
-        {/* Motor Temp */}
         <div style={{ background: "#1e293b", borderRadius: "16px", padding: "20px", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
           <h3 style={{ textAlign: "center", marginBottom: "12px" }}>Motor Temp</h3>
           <GaugeComponent
@@ -124,7 +118,6 @@ const handleCharge = () => {
           />
         </div>
 
-        {/* Battery Temp */}
         <div style={{ background: "#1e293b", borderRadius: "16px", padding: "20px", boxShadow: "0 8px 32px rgba(0,0,0,0.5)" }}>
           <h3 style={{ textAlign: "center", marginBottom: "12px" }}>Battery Temp</h3>
           <GaugeComponent
@@ -138,7 +131,6 @@ const handleCharge = () => {
         </div>
       </div>
 
-      {/* Distance Info */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", maxWidth: "800px", margin: "0 auto", width: "100%" }}>
         <div style={{ background: "#1e293b", padding: "16px", borderRadius: "12px", textAlign: "center" }}>
           <h4>Total Distance</h4>
@@ -154,7 +146,6 @@ const handleCharge = () => {
         </div>
       </div>
 
-      {/* Status + RPM + Controls */}
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "32px", alignItems: "center" }}>
         <div style={{ fontSize: "2rem", fontWeight: "bold", color: isRunning ? "#22c55e" : isCharging ? "#3b82f6" : "#ef4444" }}>
           STATUS: {liveData.status.toUpperCase()}
@@ -165,7 +156,6 @@ const handleCharge = () => {
         </div>
 
         <div style={{ display: "flex", gap: "20px" }}>
-          {/* VEHICLE START / STOP BUTTON */}
           <button
             onClick={handleMainAction}
             disabled={isCharging}
@@ -185,7 +175,6 @@ const handleCharge = () => {
             {isRunning ? "⏹️ STOP" : "🚗 START"}
           </button>
 
-          {/* CHARGE / STOP CHARGING BUTTON (replaces old logic) */}
           <button
             onClick={handleCharge}
             disabled={isRunning}
@@ -207,7 +196,6 @@ const handleCharge = () => {
         </div>
       </div>
 
-      {/* Charging Info */}
       {isCharging && (
         <div style={{ background: "#1e293b", padding: "20px", borderRadius: "12px", maxWidth: "600px", margin: "0 auto", borderLeft: "6px solid #3b82f6" }}>
           <h3>🔌 Charging in Progress</h3>
@@ -217,7 +205,6 @@ const handleCharge = () => {
         </div>
       )}
 
-      {/* Faults */}
       {liveData.faults?.length > 0 && (
         <div style={{ background: "#450a0a", padding: "20px", borderRadius: "12px", maxWidth: "800px", margin: "0 auto", color: "#fecaca" }}>
           <strong>⚠️ FAULTS:</strong> {liveData.faults.join(" • ")}

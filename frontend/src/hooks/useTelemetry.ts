@@ -31,7 +31,7 @@ export const useTelemetry = () => {
 
       socket.onclose = (e) => {
         console.log("WS closed:", e.code, e.reason);
-        setTimeout(connect, 2000); // auto-reconnect
+        setTimeout(connect, 2000); 
       };
     };
 

@@ -24,7 +24,6 @@ class TelemetryConsumer(AsyncWebsocketConsumer):
             command = data.get("command")
 
             if command == "get_latest":
-                # Send the most recent persisted row from database
                 latest = await sync_to_async(
                     lambda: TelemetryData.objects.order_by('-timestamp').first()
                 )()
@@ -44,7 +43,7 @@ class TelemetryConsumer(AsyncWebsocketConsumer):
                         "charging_end": latest.charging_end.isoformat() if latest.charging_end else None,
                         "charging_gained_percent": float(latest.charging_gained_percent),
                         "timestamp": latest.timestamp.isoformat(),
-                        "source": "database"  # helps debug
+                        "source": "database"  
                     }
                     await self.send(text_data=json.dumps(payload))
                 else:
@@ -76,7 +75,6 @@ class TelemetryConsumer(AsyncWebsocketConsumer):
                 elif command == "stop_vehicle":
                     SIMULATOR_STATE["vehicle_started"] = False
 
-            # Log events
             event_map = {
                 "start_vehicle": "vehicle_start",
                 "stop_vehicle": "vehicle_stop",
