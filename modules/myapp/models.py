@@ -1,0 +1,37 @@
+# modules/myapp/models.py   ← FULL COPY-PASTE THIS FILE
+from django.db import models
+
+class TelemetryData(models.Model):
+    speed = models.FloatField()
+    rpm = models.FloatField()
+    battery = models.FloatField()
+    motor_temp = models.FloatField()
+    battery_temp = models.FloatField()
+    status = models.CharField(max_length=20)
+    faults = models.JSONField(default=list)
+    total_distance = models.FloatField(default=0.0)
+    estimated_remaining_km = models.FloatField(default=0.0)
+    start_time = models.DateTimeField(null=True, blank=True)
+    charging_start = models.DateTimeField(null=True, blank=True)
+    charging_end = models.DateTimeField(null=True, blank=True)
+    charging_gained_percent = models.FloatField(default=0.0)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [models.Index(fields=['timestamp'])]
+
+
+class EventLog(models.Model):
+    EVENT_CHOICES = [
+        ('vehicle_start', 'Vehicle Started'),
+        ('vehicle_stop', 'Vehicle Stopped'),
+        ('charging_start', 'Charging Started'),
+        ('charging_stop', 'Charging Stopped'),
+    ]
+    event_type = models.CharField(max_length=20, choices=EVENT_CHOICES)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    details = models.JSONField(default=dict, blank=True)   # optional extra info
+
+    class Meta:
+        ordering = ['-timestamp']
