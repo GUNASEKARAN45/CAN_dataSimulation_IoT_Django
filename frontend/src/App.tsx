@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import type { TelemetryData } from '../types';
+import type { TelemetryData } from './types';
 import { useTelemetry } from "./hooks/useTelemetry";
 import GaugeComponent from 'react-gauge-component';
 
@@ -27,20 +27,20 @@ function App() {
   }, [liveData]);
 
   const handleMainAction = () => {
-  if (liveData?.status === "running") {
-    sendCommand("stop_vehicle");
-  } else {
-    sendCommand("start_vehicle");
-  }
-};
+    if (liveData?.status === "running") {
+      sendCommand("stop_vehicle");
+    } else {
+      sendCommand("start_vehicle");
+    }
+  };
 
-const handleCharge = () => {
-  if (liveData?.status === "charging") {
-    sendCommand("stop_charging");
-  } else if (liveData?.status === "stopped") {
-    sendCommand("start_charging");
-  }
-};
+  const handleCharge = () => {
+    if (liveData?.status === "charging") {
+      sendCommand("stop_charging");
+    } else if (liveData?.status === "stopped") {
+      sendCommand("start_charging");
+    }
+  };
 
   if (!liveData) {
     return (
@@ -53,7 +53,7 @@ const handleCharge = () => {
 
   const isRunning = liveData.status === "running";
   const isCharging = liveData.status === "charging";
-  const canStartVehicle = !isCharging;   
+  const canStartVehicle = !isCharging;
 
   const batteryColor = liveData.battery > 30 ? "#22c55e" : liveData.battery > 15 ? "#f59e0b" : "#ef4444";
 
