@@ -136,7 +136,7 @@ function App() {
 
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "32px", alignItems: "center" }}>
         <div style={{ fontSize: "2rem", fontWeight: "bold", color: isRunning ? "#22c55e" : isCharging ? "#3b82f6" : "#ef4444" }}>
-          STATUS: {liveData.status.toUpperCase()}
+          STATUS: {liveData.status?.toUpperCase() ?? "UNKNOWN"}
         </div>
 
         <div style={{ fontSize: "2rem" }}>

@@ -7,33 +7,43 @@ export const useTelemetry = () => {
 
   useEffect(() => {
     const connect = () => {
-  const url = `ws://localhost:8000/ws/telemetry/`;
-  console.log("Connecting to:", url);
+      const url = `ws://localhost:8000/ws/telemetry/`;
+      console.log("Connecting to:", url);
 
-  const socket = new WebSocket(url);
-  socketRef.current = socket;
+      const socket = new WebSocket(url);
+      socketRef.current = socket;
 
-  socket.onopen = () => {
-    console.log("WebSocket connected");
-    socket.send(JSON.stringify({ command: "get_latest" }));
-  };
+      socket.onopen = () => {
+        console.log("WebSocket connected");
+        socket.send(JSON.stringify({ command: "get_latest" }));
+      };
 
-  socket.onmessage = (event) => {
-    try {
-      const parsed = JSON.parse(event.data);
-      setData(parsed);
-    } catch (err) {
-      console.error("Parse error:", err);
-    }
-  };
+      socket.onmessage = (event) => {
+        try {
+          const parsed = JSON.parse(event.data);
 
-  socket.onerror = (err) => console.error("WS error:", err);
+          // ✅ Ignore command-only messages
+          if (
+            parsed &&
+            typeof parsed === "object" &&
+            parsed.speed !== undefined &&
+            parsed.status !== undefined
+          ) {
+            setData(parsed as TelemetryData);
+          }
 
-  socket.onclose = (e) => {
-    console.log("WS closed:", e.code, e.reason);
-    setTimeout(connect, 2000);
-  };
-};
+        } catch (err) {
+          console.error("Parse error:", err);
+        }
+      };
+
+      socket.onerror = (err) => console.error("WS error:", err);
+
+      socket.onclose = (e) => {
+        console.log("WS closed:", e.code, e.reason);
+        setTimeout(connect, 2000);
+      };
+    };
 
     connect();
 
