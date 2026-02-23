@@ -1,119 +1,198 @@
-#include <WiFi.h>
-#include <ArduinoWebsockets.h>
-#include <SPI.h>
-#include <mcp_can.h>
+// #include <WiFi.h>
+// #include <ArduinoWebsockets.h>
+// #include <SPI.h>
+// #include <mcp_can.h>
 
-using namespace websockets;
+// using namespace websockets;
 
-const char* ssid = "GUNA";
-const char* password = "GUNA2525";
+// /* ================= WIFI ================= */
+// const char* ssid = "GUNA";
+// const char* password = "GUNA2525";
 
+// /* ============== WEBSOCKET SERVER ============== */
+// /* ⚠ CHANGE IP IF NEEDED */
+// const char* websocket_server = "ws://10.81.44.152:8000/ws/telemetry/";
 
-const char* websocket_server = "ws://10.81.44.152:8000/ws/telemetry/";
+// WebsocketsClient client;
 
-WebsocketsClient client;
+// /* ================= CAN ================= */
+// #define CAN_CS 5
+// MCP_CAN CAN(CAN_CS);
 
-// MCP2515
-#define CAN_CS 5
-MCP_CAN CAN(CAN_CS);
+// /* ============== VEHICLE STATE ============== */
+// String vehicleState = "stopped"; 
+// // possible: "running", "stopped", "charging"
 
-float speed = 0;
-float battery = 75;
-float motor_temp = 30;
-float battery_temp = 28;
-float total_distance = 0;
+// /* ============== TELEMETRY VALUES ============== */
+// float speed = 0;
+// float battery = 75;
+// float motor_temp = 30;
+// float battery_temp = 28;
+// float total_distance = 0;
+// float charging_gained = 0;
 
-unsigned long lastSend = 0;
+// unsigned long lastSend = 0;
 
-void connectWiFi() {
-  WiFi.begin(ssid, password);
-  Serial.print("Connecting WiFi");
+// /* ================= WIFI CONNECT ================= */
+// void connectWiFi() {
+//   WiFi.begin(ssid, password);
+//   Serial.print("Connecting WiFi");
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
+//   while (WiFi.status() != WL_CONNECTED) {
+//     delay(500);
+//     Serial.print(".");
+//   }
 
-  Serial.println("\nWiFi Connected");
-  Serial.println(WiFi.localIP());
-}
+//   Serial.println("\nWiFi Connected");
+//   Serial.println(WiFi.localIP());
+// }
 
-void connectWebSocket() {
-  Serial.println("Connecting WebSocket...");
+// /* ================= WEBSOCKET CONNECT ================= */
+// void connectWebSocket() {
+//   Serial.println("Connecting WebSocket...");
 
-  if (client.connect(websocket_server)) {
-    Serial.println("WebSocket Connected!");
-  } else {
-    Serial.println("WebSocket Failed!");
-  }
-}
+//   if (client.connect(websocket_server)) {
+//     Serial.println("WebSocket Connected!");
+//   } else {
+//     Serial.println("WebSocket Failed!");
+//   }
 
-void setup() {
-  Serial.begin(115200);
+//   /* ===== LISTEN FOR COMMANDS FROM DJANGO ===== */
+//   client.onMessage([](WebsocketsMessage message) {
 
-  connectWiFi();
-  connectWebSocket();
+//     String msg = message.data();
+//     Serial.println("Received: " + msg);
 
-  // CAN init
-  if (CAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) == CAN_OK) {
-    Serial.println("CAN Init OK");
-  } else {
-    Serial.println("CAN Init Failed");
-  }
+//     if (msg.indexOf("start_vehicle") >= 0) {
+//       if (vehicleState != "charging") {
+//         vehicleState = "running";
+//         Serial.println("Vehicle Started");
+//       }
+//     }
 
-  CAN.setMode(MCP_NORMAL);
-}
+//     else if (msg.indexOf("stop_vehicle") >= 0) {
+//       vehicleState = "stopped";
+//       speed = 0;
+//       Serial.println("Vehicle Stopped");
+//     }
 
-void loop() {
+//     else if (msg.indexOf("start_charging") >= 0) {
+//       if (vehicleState == "stopped") {
+//         vehicleState = "charging";
+//         charging_gained = 0;
+//         Serial.println("Charging Started");
+//       }
+//     }
 
-  // 🔁 Reconnect WiFi if disconnected
-  if (WiFi.status() != WL_CONNECTED) {
-    connectWiFi();
-  }
+//     else if (msg.indexOf("stop_charging") >= 0) {
+//       vehicleState = "stopped";
+//       Serial.println("Charging Stopped");
+//     }
+//   });
+// }
 
-  // 🔁 Reconnect WebSocket if disconnected
-  if (!client.available()) {
-    connectWebSocket();
-  }
+// /* ================= SETUP ================= */
+// void setup() {
+//   Serial.begin(115200);
 
-  // REQUIRED for ArduinoWebsockets
-  client.poll();
+//   connectWiFi();
+//   connectWebSocket();
 
-  // Send every 1 second
-  if (millis() - lastSend > 1000) {
+//   // CAN init
+//   if (CAN.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) == CAN_OK) {
+//     Serial.println("CAN Init OK");
+//   } else {
+//     Serial.println("CAN Init Failed");
+//   }
 
-    // Fake telemetry
-    speed += random(-2, 4);
-    speed = constrain(speed, 0, 100);
+//   CAN.setMode(MCP_NORMAL);
+// }
 
-    battery -= speed * 0.0005;
-    battery = constrain(battery, 0, 100);
+// /* ================= LOOP ================= */
+// void loop() {
 
-    motor_temp += speed * 0.01;
-    battery_temp += speed * 0.005;
+//   /* 🔁 Reconnect WiFi */
+//   if (WiFi.status() != WL_CONNECTED) {
+//     connectWiFi();
+//   }
 
-    total_distance += speed / 3600.0;
+//   /* 🔁 Reconnect WebSocket */
+//   if (!client.available()) {
+//     connectWebSocket();
+//   }
 
-    String status = speed > 0 ? "running" : "stopped";
+//   client.poll();
 
-    String payload = "{";
-    payload += "\"speed\":" + String(speed,1) + ",";
-    payload += "\"rpm\":" + String(speed*55,0) + ",";
-    payload += "\"battery\":" + String(battery,1) + ",";
-    payload += "\"motor_temp\":" + String(motor_temp,1) + ",";
-    payload += "\"battery_temp\":" + String(battery_temp,1) + ",";
-    payload += "\"status\":\"" + status + "\",";
-    payload += "\"faults\":[],";
-    payload += "\"total_distance\":" + String(total_distance,1) + ",";
-    payload += "\"estimated_remaining_km\":" + String(battery*3,1) + ",";
-    payload += "\"charging_gained_percent\":0";
-    payload += "}";
+//   /* ===== SEND DATA EVERY 1 SECOND ===== */
+//   if (millis() - lastSend > 1000) {
 
-    if (client.available()) {
-      client.send(payload);
-      Serial.println("Sent: " + payload);
-    }
+//     /* ================= RUNNING MODE ================= */
+//     if (vehicleState == "running") {
 
-    lastSend = millis();
-  }
-}
+//       speed += random(-2, 5);
+//       speed = constrain(speed, 0, 120);
+
+//       battery -= speed * 0.0008;
+//       battery = constrain(battery, 0, 100);
+
+//       motor_temp += speed * 0.02;
+//       battery_temp += speed * 0.01;
+
+//       total_distance += speed / 3600.0;
+//     }
+
+//     /* ================= STOP MODE ================= */
+//     else if (vehicleState == "stopped") {
+
+//       speed = 0;
+
+//       motor_temp -= 0.3;
+//       battery_temp -= 0.2;
+
+//       motor_temp = constrain(motor_temp, 25, 120);
+//       battery_temp = constrain(battery_temp, 25, 80);
+//     }
+
+//     /* ================= CHARGING MODE ================= */
+//     else if (vehicleState == "charging") {
+
+//       speed = 0;
+
+//       if (battery < 100) {
+//         battery += 1;                 // +1% per second
+//         charging_gained += 1;
+//       }
+
+//       battery = constrain(battery, 0, 100);
+//     }
+
+//     /* ===== AUTO STOP IF BATTERY DEAD ===== */
+//     if (battery <= 5 && vehicleState == "running") {
+//       vehicleState = "stopped";
+//       speed = 0;
+//       Serial.println("Low Battery - Auto Stop");
+//     }
+
+//     /* ================= BUILD JSON ================= */
+//     String payload = "{";
+//     payload += "\"speed\":" + String(speed,1) + ",";
+//     payload += "\"rpm\":" + String(speed * 55,0) + ",";
+//     payload += "\"battery\":" + String(battery,1) + ",";
+//     payload += "\"motor_temp\":" + String(motor_temp,1) + ",";
+//     payload += "\"battery_temp\":" + String(battery_temp,1) + ",";
+//     payload += "\"status\":\"" + vehicleState + "\",";
+//     payload += "\"faults\":[],";
+//     payload += "\"total_distance\":" + String(total_distance,1) + ",";
+//     payload += "\"estimated_remaining_km\":" + String(battery * 3,1) + ",";
+//     payload += "\"charging_gained_percent\":" + String(charging_gained,1);
+//     payload += "}";
+
+//     /* ===== SEND TO DJANGO ===== */
+//     if (client.available()) {
+//       client.send(payload);
+//       Serial.println("Sent: " + payload);
+//     }
+
+//     lastSend = millis();
+//   }
+// }
