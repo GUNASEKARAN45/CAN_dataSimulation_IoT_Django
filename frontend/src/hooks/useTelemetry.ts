@@ -22,7 +22,6 @@ export const useTelemetry = () => {
         try {
           const parsed = JSON.parse(event.data);
 
-          // ✅ Ignore command-only messages
           if (
             parsed &&
             typeof parsed === "object" &&

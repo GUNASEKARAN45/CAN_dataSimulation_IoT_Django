@@ -1,12 +1,15 @@
 import json
+import time
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .models import TelemetryData, EventLog
 
 
 class TelemetryConsumer(AsyncWebsocketConsumer):
+
     async def connect(self):
         self.group_name = "telemetry_group"
+        self.last_saved_time = 0  # 🔥 Track last DB save time
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
@@ -20,12 +23,48 @@ class TelemetryConsumer(AsyncWebsocketConsumer):
         try:
             data = json.loads(text_data)
 
-            # ===============================
-            # ✅ CASE 1: ESP32 sending telemetry
-            # ===============================
-            if "speed" in data:
-                await sync_to_async(TelemetryData.objects.create)(**data)
+            # =====================================================
+            # ✅ CASE 1: React requesting latest stored telemetry
+            # =====================================================
+            if data.get("command") == "get_latest":
+                last = await sync_to_async(
+                    TelemetryData.objects.order_by("-timestamp").first
+                )()
 
+                if last:
+                    await self.send(text_data=json.dumps({
+                        "restore": True,
+                        "speed": last.speed,
+                        "rpm": last.rpm,
+                        "battery": last.battery,
+                        "motor_temp": last.motor_temp,
+                        "battery_temp": last.battery_temp,
+                        "status": last.status,
+                        "faults": last.faults,
+                        "total_distance": last.total_distance,
+                        "estimated_remaining_km": last.estimated_remaining_km,
+                        "charging_gained_percent": last.charging_gained_percent,
+                    }))
+                else:
+                    await self.send(text_data=json.dumps({
+                        "message": "no_data"
+                    }))
+                return
+
+
+            # =====================================================
+            # ✅ CASE 2: ESP32 sending telemetry
+            # =====================================================
+            if "speed" in data:
+
+                current_time = time.time()
+
+                # 🔥 Save only once every 6 seconds
+                if current_time - self.last_saved_time >= 6:
+                    await sync_to_async(TelemetryData.objects.create)(**data)
+                    self.last_saved_time = current_time
+
+                # Always broadcast (every 1 second)
                 await self.channel_layer.group_send(
                     self.group_name,
                     {
@@ -35,9 +74,10 @@ class TelemetryConsumer(AsyncWebsocketConsumer):
                 )
                 return
 
-            # ===============================
-            # ✅ CASE 2: React sending command
-            # ===============================
+
+            # =====================================================
+            # ✅ CASE 3: React sending control commands
+            # =====================================================
             command = data.get("command")
 
             event_map = {
@@ -53,7 +93,6 @@ class TelemetryConsumer(AsyncWebsocketConsumer):
                     details={"command": command}
                 )
 
-                # Send command back to ESP32
                 await self.channel_layer.group_send(
                     self.group_name,
                     {
