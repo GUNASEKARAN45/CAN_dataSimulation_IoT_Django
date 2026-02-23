@@ -6,22 +6,17 @@
 
 // using namespace websockets;
 
-// /* ================= WIFI ================= */
 // const char* ssid = "GUNA";
 // const char* password = "GUNA2525";
 
-// /* ================= WEBSOCKET ================= */
 // const char* websocket_server = "ws://10.81.44.152:8000/ws/telemetry/";
 // WebsocketsClient client;
 
-// /* ================= CAN ================= */
 // #define CAN_CS 5
 // MCP_CAN CAN(CAN_CS);
 
-// /* ================= VEHICLE STATE ================= */
 // String vehicleState = "stopped";
 
-// /* ================= TELEMETRY VALUES ================= */
 // float speed = 0;
 // float battery = 75;
 // float motor_temp = 30;
@@ -35,7 +30,6 @@
 // unsigned long lastSend = 0;
 // unsigned long lastCoolingTime = 0;
 
-// /* ================= WIFI ================= */
 // void connectWiFi() {
 //   WiFi.begin(ssid, password);
 //   Serial.print("Connecting WiFi");
@@ -49,7 +43,6 @@
 //   Serial.println(WiFi.localIP());
 // }
 
-// /* ================= RESTORE FROM SERVER ================= */
 // void requestLatestData() {
 //   if (client.available()) {
 //     client.send("{\"command\":\"get_latest\"}");
@@ -57,7 +50,6 @@
 //   }
 // }
 
-// /* ================= WEBSOCKET ================= */
 // void connectWebSocket() {
 //   Serial.println("Connecting WebSocket...");
 
@@ -77,7 +69,6 @@
 //     DeserializationError error = deserializeJson(doc, msg);
 //     if (error) return;
 
-//     /* ===== RESTORE ===== */
 //     if (doc["restore"] == true) {
 
 //       speed = doc["speed"];
@@ -92,7 +83,6 @@
 //       return;
 //     }
 
-//     /* ===== COMMANDS ===== */
 //     if (doc.containsKey("command")) {
 
 //       String cmd = doc["command"].as<String>();
@@ -122,7 +112,6 @@
 //   });
 // }
 
-// /* ================= SETUP ================= */
 // void setup() {
 //   Serial.begin(115200);
 
@@ -141,7 +130,6 @@
 //   lastCoolingTime = millis();
 // }
 
-// /* ================= LOOP ================= */
 // void loop() {
 
 //   if (WiFi.status() != WL_CONNECTED) {
@@ -159,7 +147,6 @@
 //     float dt = (millis() - lastSend) / 1000.0;
 //     lastSend = millis();
 
-//     /* ================= RUNNING MODE ================= */
 //     if (vehicleState == "running") {
 
 //       throttle = random(30, 100) / 100.0;
@@ -191,7 +178,6 @@
 //       battery -= battery_drain;
 //       battery = constrain(battery, 0, 100);
 
-//       /* ===== TEMPERATURE INCREASE ===== */
 
 //       // Motor: 1°C per 2 km
 //       motor_temp += distance / 2.0;
@@ -208,7 +194,6 @@
 //       }
 //     }
 
-//     /* ================= STOPPED MODE ================= */
 //     else if (vehicleState == "stopped") {
 
 //       speed = 0;
@@ -224,7 +209,6 @@
 //       }
 //     }
 
-//     /* ================= CHARGING MODE ================= */
 //     else if (vehicleState == "charging") {
 
 //       speed = 0;
@@ -255,7 +239,6 @@
 //       }
 //     }
 
-//     /* ================= Fault signals ================= */
 
 //     String faults = "[";
 //     bool hasFault = false;
@@ -285,7 +268,6 @@
 
 //     faults += "]";
 
-//     /* ================= SEND PAYLOAD ================= */
 
 //     float rpm = speed * 55;
     
