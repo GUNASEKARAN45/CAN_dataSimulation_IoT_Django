@@ -5,24 +5,12 @@ import GaugeComponent from 'react-gauge-component';
 
 function App() {
   const { data: liveData, sendCommand } = useTelemetry();
-  const [history, setHistory] = useState<TelemetryData[]>([]);
-  const wsRef = useRef<WebSocket | null>(null);
 
 
-  useEffect(() => {
-    const url = `${window.location.origin.replace(/^http/, 'ws')}/ws/telemetry/`;
-    wsRef.current = new WebSocket(url);
 
-    wsRef.current.onopen = () => console.log("WebSocket connected");
-    wsRef.current.onclose = (e) => console.log("WebSocket closed:", e.code, e.reason);
-    wsRef.current.onerror = (e) => console.error("WebSocket error:", e);
-
-    return () => wsRef.current?.close(1000, "Component unmount");
-  }, []);
 
   useEffect(() => {
     if (liveData) {
-      setHistory(prev => [...prev.slice(-40), liveData]);
     }
   }, [liveData]);
 
