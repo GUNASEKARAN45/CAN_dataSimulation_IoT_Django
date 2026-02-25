@@ -14,12 +14,10 @@ class TelemetryData(models.Model):
     charging_start = models.DateTimeField(null=True, blank=True)
     charging_end = models.DateTimeField(null=True, blank=True)
     charging_gained_percent = models.FloatField(default=0.0)
+    total_daily_charge = models.FloatField(default=0.0)
     timestamp = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        ordering = ['-timestamp']
-        indexes = [models.Index(fields=['timestamp'])]
-
+    
 
 class EventLog(models.Model):
     EVENT_CHOICES = [
@@ -32,5 +30,4 @@ class EventLog(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     details = models.JSONField(default=dict, blank=True)   
 
-    class Meta:
-        ordering = ['-timestamp']
+    
