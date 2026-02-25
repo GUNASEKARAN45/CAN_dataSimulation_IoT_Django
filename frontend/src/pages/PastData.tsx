@@ -6,7 +6,7 @@ const fonts = `
   @keyframes rowIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
   .data-row:hover { background: #f8fafc !important; }
   .action-btn:hover { filter: brightness(0.95); transform: translateY(-1px); }
-  .date-input:focus { outline: none; border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+  .date-input:focus { outline: none; border-color: #505bfe !important; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
 `;
 
 interface PastDayData {
@@ -22,7 +22,7 @@ interface PastDayData {
 }
 
 function TempCell({ min, avg, max }: { min: number; avg: number; max: number }) {
-  const color = avg > 85 ? "#dc2626" : avg > 60 ? "#d97706" : "#16a34a";
+  const color = avg > 85 ? "#dc2626" : avg > 60 ? "#d97706" : "#16b895";
   return (
     <div style={{ display: "flex", alignItems: "stretch", height: "100%" }}>
       {[
@@ -127,7 +127,7 @@ function PastData() {
             onChange={handleDateChange}
             style={{ padding: "9px 14px", fontSize: "0.9rem", borderRadius: "8px", border: "1px solid #e2e8f0", background: "#f8fafc", color: "#0f172a", fontFamily: "'DM Sans', sans-serif", transition: "border-color 0.15s, box-shadow 0.15s", cursor: "pointer" }}
           />
-          <button className="action-btn" onClick={() => { setSelectedDate(""); fetchData(); }} style={{ padding: "9px 20px", background: "linear-gradient(135deg, #1e40af, #3b82f6)", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "0.875rem", fontWeight: "600", fontFamily: "'DM Sans', sans-serif", boxShadow: "0 2px 8px rgba(59,130,246,0.3)", transition: "all 0.15s ease", letterSpacing: "0.02em" }}>
+          <button className="action-btn" onClick={() => { setSelectedDate(""); fetchData(); }} style={{ padding: "9px 20px", background: "#505bfe", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "0.875rem", fontWeight: "600", fontFamily: "'DM Sans', sans-serif", boxShadow: "0 2px 8px rgba(59,130,246,0.3)", transition: "all 0.15s ease", letterSpacing: "0.02em" }}>
             Last 5 Days
           </button>
           {selectedDate && (
@@ -173,11 +173,9 @@ function PastData() {
               ))}
             </div>
 
-            {/* Rows */}
             {data.map((day, index) => (
               <div key={index} className="data-row" style={{ display: "grid", gridTemplateColumns: "140px 160px 160px 1fr 1fr", borderBottom: index < data.length - 1 ? "1px solid #f8fafc" : "none", background: "#ffffff", animation: `rowIn 0.3s ease both ${index * 40}ms`, transition: "background 0.15s ease" }}>
 
-                {/* Date */}
                 <div style={{ padding: "0 16px", display: "flex", alignItems: "center", borderRight: "1px solid #f1f5f9" }}>
                   <div>
                     <div style={{ fontSize: "0.875rem", fontWeight: "600", color: "#1e293b" }}>
@@ -187,7 +185,6 @@ function PastData() {
                   </div>
                 </div>
 
-                {/* Distance */}
                 <div style={{ padding: "14px 16px", borderRight: "1px solid #f1f5f9", display: "flex", alignItems: "center" }}>
                   <div>
                     <span style={{ fontSize: "1.05rem", fontWeight: "600", color: "#0f172a", fontFamily: "'Roboto Mono', monospace" }}>
@@ -197,14 +194,13 @@ function PastData() {
                   </div>
                 </div>
 
-                {/* Battery gain */}
                 <div style={{ padding: "14px 16px", borderRight: "1px solid #f1f5f9", display: "flex", alignItems: "center" }}>
                   {day.battery_gain != null ? (
                     <div style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: day.battery_gain >= 0 ? "#f0fdf4" : "#fef2f2", padding: "4px 10px", borderRadius: "6px" }}>
                       <span style={{ fontSize: "0.8rem", color: day.battery_gain >= 0 ? "#16a34a" : "#dc2626" }}>
                         {day.battery_gain >= 0 ? "+" : ""}
                       </span>
-                      <span style={{ fontSize: "1rem", fontWeight: "600", fontFamily: "'Roboto Mono', monospace", color: day.battery_gain >= 0 ? "#15803d" : "#b91c1c" }}>
+                      <span style={{ fontSize: "1rem", fontWeight: "600", fontFamily: "'Roboto Mono', monospace", color: day.battery_gain >= 0 ? "#16b895" : "#b91c1c" }}>
                         {day.battery_gain?.toFixed(2)}%
                       </span>
                     </div>
