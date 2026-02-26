@@ -6,7 +6,7 @@ from .models import TelemetryData
 
 def past_5_days_summary(request):
     today = timezone.now().date()
-    filter_date_str = request.GET.get('date')  # e.g. "2026-02-25"
+    filter_date_str = request.GET.get('date')  
 
     if filter_date_str:
         try:
@@ -16,7 +16,6 @@ def past_5_days_summary(request):
         except ValueError:
             return JsonResponse({"error": "Invalid date format"}, status=400)
     else:
-        # Default: last 5 days
         start_date = today - timedelta(days=5)
         end_date = today
 
@@ -32,10 +31,8 @@ def past_5_days_summary(request):
 
     result = []
 
-    # Sort dates descending (newest first)
     sorted_dates = sorted(grouped.keys(), reverse=True)
 
-    # Get end-of-day total_distance for each day
     day_end_values = {}
     for date in sorted_dates:
         entries = grouped[date]
