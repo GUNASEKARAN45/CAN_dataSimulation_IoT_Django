@@ -1,8 +1,9 @@
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 from datetime import timedelta
 from collections import defaultdict
 from .models import TelemetryData
+import csv
 
 def past_5_days_summary(request):
     today = timezone.now().date()
@@ -30,7 +31,6 @@ def past_5_days_summary(request):
         grouped[entry.timestamp.date()].append(entry)
 
     result = []
-
     sorted_dates = sorted(grouped.keys(), reverse=True)
 
     day_end_values = {}
@@ -83,3 +83,149 @@ def past_5_days_summary(request):
         })
 
     return JsonResponse(result, safe=False)
+
+
+# ── NEW: CSV download endpoint ──────────────────────────────────────────────
+def download_telemetry_csv(request):
+    """
+    GET /api/download-csv/              → last 5 days summary as CSV
+    GET /api/download-csv/?date=YYYY-MM-DD → single day summary as CSV
+    GET /api/download-csv/?raw=1        → raw every row from DB (last 5 days)
+    GET /api/download-csv/?raw=1&date=YYYY-MM-DD → raw rows for one date
+    """
+    today = timezone.now().date()
+    filter_date_str = request.GET.get('date')
+    raw_mode = request.GET.get('raw', '0') == '1'
+
+    if filter_date_str:
+        try:
+            filter_date = timezone.datetime.strptime(filter_date_str, '%Y-%m-%d').date()
+            start_date = filter_date
+            end_date = filter_date
+        except ValueError:
+            return HttpResponse("Invalid date format. Use YYYY-MM-DD.", status=400)
+    else:
+        start_date = today - timedelta(days=5)
+        end_date = today
+
+    # ── Raw mode: dump every DB row ──────────────────────────────────────
+    if raw_mode:
+        qs = (
+            TelemetryData.objects
+            .filter(timestamp__date__gte=start_date, timestamp__date__lte=end_date)
+            .order_by("timestamp")
+        )
+
+        filename = f"telemetry_raw_{start_date}_to_{end_date}.csv"
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        writer = csv.writer(response)
+        writer.writerow([
+            "Timestamp", "Status", "Speed (km/h)", "RPM",
+            "Battery (%)", "Motor Temp (°C)", "Battery Temp (°C)",
+            "Total Distance (km)", "Estimated Remaining (km)",
+            "Charging Gained (%)", "Faults",
+        ])
+
+        for entry in qs:
+            writer.writerow([
+                entry.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                entry.status,
+                entry.speed,
+                entry.rpm,
+                entry.battery,
+                entry.motor_temp,
+                entry.battery_temp,
+                entry.total_distance,
+                entry.estimated_remaining_km,
+                entry.charging_gained_percent,
+                entry.faults,
+            ])
+
+        return response
+
+    # ── Summary mode: same aggregation logic as past_5_days_summary ─────
+    data = (
+        TelemetryData.objects
+        .filter(timestamp__date__gte=start_date, timestamp__date__lte=end_date)
+        .order_by("timestamp")
+    )
+
+    grouped = defaultdict(list)
+    for entry in data:
+        grouped[entry.timestamp.date()].append(entry)
+
+    sorted_dates = sorted(grouped.keys(), reverse=True)
+
+    day_end_values = {}
+    for date in sorted_dates:
+        entries = grouped[date]
+        if entries:
+            last_entry = max(entries, key=lambda e: e.timestamp)
+            day_end_values[date] = last_entry.total_distance or 0.0
+
+    rows = []
+    for i, date in enumerate(sorted_dates):
+        entries = grouped[date]
+        if not entries:
+            continue
+
+        end_value = day_end_values.get(date, 0.0)
+        if i == len(sorted_dates) - 1:
+            driven = end_value
+        else:
+            prev_date = sorted_dates[i + 1]
+            driven = max(0.0, end_value - day_end_values.get(prev_date, 0.0))
+
+        motor_temps  = [e.motor_temp   for e in entries if e.motor_temp   is not None]
+        battery_temps = [e.battery_temp for e in entries if e.battery_temp is not None]
+
+        total_gain = session_max = previous_gain = 0
+        for e in sorted(entries, key=lambda x: x.timestamp):
+            gain = e.charging_gained_percent or 0
+            if gain > previous_gain:
+                session_max = gain
+            elif gain < previous_gain:
+                total_gain += session_max
+                session_max = gain if gain > 0 else 0
+            previous_gain = gain
+        total_gain += session_max
+
+        rows.append({
+            "date": str(date),
+            "total_distance": round(driven, 2),
+            "battery_gain": round(total_gain, 2),
+            "avg_motor_temp":  round(sum(motor_temps)  / len(motor_temps),  2) if motor_temps  else 0,
+            "min_motor_temp":  min(motor_temps)  if motor_temps  else 0,
+            "max_motor_temp":  max(motor_temps)  if motor_temps  else 0,
+            "avg_battery_temp": round(sum(battery_temps) / len(battery_temps), 2) if battery_temps else 0,
+            "min_battery_temp": min(battery_temps) if battery_temps else 0,
+            "max_battery_temp": max(battery_temps) if battery_temps else 0,
+        })
+
+    filename = f"telemetry_summary_{start_date}_to_{end_date}.csv"
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        "Date", "Total Distance (km)", "Battery Gain (%)",
+        "Motor Temp Min (°C)", "Motor Temp Avg (°C)", "Motor Temp Max (°C)",
+        "Battery Temp Min (°C)", "Battery Temp Avg (°C)", "Battery Temp Max (°C)",
+    ])
+
+    for row in rows:
+        writer.writerow([
+            row["date"],
+            row["total_distance"],
+            row["battery_gain"],
+            row["min_motor_temp"],
+            row["avg_motor_temp"],
+            row["max_motor_temp"],
+            row["min_battery_temp"],
+            row["avg_battery_temp"],
+            row["max_battery_temp"],
+        ])
+
+    return response

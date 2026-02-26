@@ -120,6 +120,7 @@ function PastData() {
     ? data.reduce((s, d) => s + (d.battery_gain ?? 0), 0) / data.length
     : 0;
 
+
   const downloadCSV = useCallback(() => {
     if (data.length === 0) {
       alert("No data available to download");
@@ -160,7 +161,9 @@ function PastData() {
     const link = document.createElement("a");
     link.href = url;
     const today = new Date().toISOString().slice(0, 10);
-    link.setAttribute("download", `ev-data-${today}.csv`);
+    const time= new Date().toTimeString().slice(0, 8).replace(/:/g, '-');;
+
+    link.setAttribute("download", `Telemetry Data ${today} ${time}`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -336,7 +339,6 @@ function PastData() {
             className="action-btn"
             onClick={downloadCSV}
             disabled={loading || data.length === 0}
-            title="Download current table data as CSV"
             style={{
               padding: "9px 20px",
               background: data.length > 0 ? "#10b981" : "#cbd5e1",
@@ -353,7 +355,8 @@ function PastData() {
               letterSpacing: "0.02em",
             }}
           >
-            ⬇ Download CSV
+  
+            Download
           </button>
         </div>
 
