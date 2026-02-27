@@ -1,4 +1,6 @@
+// src/hooks/usePastData.ts
 import { useEffect, useState } from "react";
+import api from "../lib/axios";
 
 export interface PastDayData {
   date: string;
@@ -16,10 +18,10 @@ export const usePastData = () => {
   const [data, setData] = useState<PastDayData[]>([]);
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/past-data/")
-      .then((res) => res.json())
-      .then((res) => setData(res))
-      .catch((err) => console.error(err));
+    api
+      .get<PastDayData[]>("/api/past-data/")
+      .then(({ data }) => setData(data))
+      .catch((err) => console.error("usePastData:", err));
   }, []);
 
   return data;

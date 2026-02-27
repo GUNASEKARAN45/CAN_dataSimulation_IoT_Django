@@ -1,4 +1,32 @@
+from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+
+class CustomUser(AbstractUser):
+    ROLE_CHOICES = [
+        ('admin', 'Admin'),
+        ('user', 'User'),
+    ]
+    email = models.EmailField(unique=True)
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='user')
+
+    groups = models.ManyToManyField(
+        'auth.Group',
+        related_name='customuser_set',
+        blank=True,
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        related_name='customuser_set',
+        blank=True,
+    )
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+
+    
+    
+
 
 class TelemetryData(models.Model):
     speed = models.FloatField()
@@ -17,7 +45,6 @@ class TelemetryData(models.Model):
     total_daily_charge = models.FloatField(default=0.0)
     timestamp = models.DateTimeField(auto_now_add=True)
 
-    
 
 class EventLog(models.Model):
     EVENT_CHOICES = [
@@ -28,6 +55,4 @@ class EventLog(models.Model):
     ]
     event_type = models.CharField(max_length=20, choices=EVENT_CHOICES)
     timestamp = models.DateTimeField(auto_now_add=True)
-    details = models.JSONField(default=dict, blank=True)   
-
-    
+    details = models.JSONField(default=dict, blank=True)

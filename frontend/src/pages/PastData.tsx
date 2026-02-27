@@ -1,4 +1,6 @@
+// src/pages/PastData.tsx
 import { useEffect, useState, useCallback } from "react";
+import api from "../lib/axios";
 
 const fonts = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500;600;700&display=swap');
@@ -79,11 +81,8 @@ function PastData() {
     setLoading(true);
     setNoDataMessage("");
     try {
-      let url = "http://localhost:8000/api/past-data/";
-      if (date) url += `?date=${date}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to fetch");
-      const json = await res.json();
+      const params = date ? { date } : {};
+      const { data: json } = await api.get<PastDayData[]>("/api/past-data/", { params });
       if (Array.isArray(json) && json.length === 0) {
         setNoDataMessage(
           date
@@ -119,7 +118,6 @@ function PastData() {
   const avgBattGain = data.length
     ? data.reduce((s, d) => s + (d.battery_gain ?? 0), 0) / data.length
     : 0;
-
 
   const downloadCSV = useCallback(() => {
     if (data.length === 0) {
@@ -161,8 +159,7 @@ function PastData() {
     const link = document.createElement("a");
     link.href = url;
     const today = new Date().toISOString().slice(0, 10);
-    const time= new Date().toTimeString().slice(0, 8).replace(/:/g, '-');;
-
+    const time = new Date().toTimeString().slice(0, 8).replace(/:/g, "-");
     link.setAttribute("download", `Telemetry Data ${today} ${time}`);
     document.body.appendChild(link);
     link.click();
@@ -194,11 +191,7 @@ function PastData() {
             {[
               { label: "Records Shown", value: data.length, unit: "days" },
               { label: "Total Distance", value: totalKm.toFixed(1), unit: "km" },
-              {
-                label: "Avg Battery Gain",
-                value: avgBattGain.toFixed(1),
-                unit: "%",
-              },
+              { label: "Avg Battery Gain", value: avgBattGain.toFixed(1), unit: "%" },
             ].map(({ label, value, unit }) => (
               <div
                 key={label}
@@ -234,16 +227,14 @@ function PastData() {
                   >
                     {value}
                   </span>
-                  <span style={{ color: "#94a3b8", fontSize: "0.85rem" }}>
-                    {unit}
-                  </span>
+                  <span style={{ color: "#94a3b8", fontSize: "0.85rem" }}>{unit}</span>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Filter controls + Download button */}
+        {/* Filter controls + Download */}
         <div
           style={{
             background: "#ffffff",
@@ -259,14 +250,7 @@ function PastData() {
             animation: "fadeUp 0.4s ease both 0.1s",
           }}
         >
-          <label
-            style={{
-              fontSize: "0.85rem",
-              fontWeight: "600",
-              color: "#475569",
-              letterSpacing: "0.02em",
-            }}
-          >
+          <label style={{ fontSize: "0.85rem", fontWeight: "600", color: "#475569" }}>
             Filter by Date
           </label>
           <input
@@ -289,10 +273,7 @@ function PastData() {
 
           <button
             className="action-btn"
-            onClick={() => {
-              setSelectedDate("");
-              fetchData();
-            }}
+            onClick={() => { setSelectedDate(""); fetchData(); }}
             style={{
               padding: "9px 20px",
               background: "#505bfe",
@@ -305,7 +286,6 @@ function PastData() {
               fontFamily: "'DM Sans', sans-serif",
               boxShadow: "0 2px 8px rgba(59,130,246,0.3)",
               transition: "all 0.15s ease",
-              letterSpacing: "0.02em",
             }}
           >
             Last 5 Days
@@ -314,10 +294,7 @@ function PastData() {
           {selectedDate && (
             <button
               className="action-btn"
-              onClick={() => {
-                setSelectedDate("");
-                fetchData();
-              }}
+              onClick={() => { setSelectedDate(""); fetchData(); }}
               style={{
                 padding: "9px 16px",
                 background: "transparent",
@@ -334,7 +311,6 @@ function PastData() {
             </button>
           )}
 
-          {/* DOWNLOAD BUTTON */}
           <button
             className="action-btn"
             onClick={downloadCSV}
@@ -349,18 +325,14 @@ function PastData() {
               fontSize: "0.875rem",
               fontWeight: "600",
               fontFamily: "'DM Sans', sans-serif",
-              boxShadow:
-                data.length > 0 ? "0 2px 8px rgba(16,185,129,0.3)" : "none",
+              boxShadow: data.length > 0 ? "0 2px 8px rgba(16,185,129,0.3)" : "none",
               transition: "all 0.15s ease",
-              letterSpacing: "0.02em",
             }}
           >
-  
             Download
           </button>
         </div>
 
-        {/* Loading */}
         {loading && (
           <div
             style={{
@@ -387,7 +359,6 @@ function PastData() {
           </div>
         )}
 
-        {/* No data */}
         {noDataMessage && !loading && (
           <div
             style={{
@@ -401,21 +372,17 @@ function PastData() {
             }}
           >
             <div style={{ fontSize: "2.5rem", marginBottom: "12px" }}>📭</div>
-            <p style={{ fontSize: "1rem", color: "#64748b", margin: 0 }}>
-              {noDataMessage}
-            </p>
+            <p style={{ fontSize: "1rem", color: "#64748b", margin: 0 }}>{noDataMessage}</p>
           </div>
         )}
 
-        {/* Table */}
         {!loading && !noDataMessage && data.length > 0 && (
           <div
             style={{
               background: "#ffffff",
               borderRadius: "16px",
               border: "1px solid #f1f5f9",
-              boxShadow:
-                "0 1px 3px rgba(0,0,0,0.07), 0 8px 24px rgba(0,0,0,0.04)",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.07), 0 8px 24px rgba(0,0,0,0.04)",
               overflow: "hidden",
               animation: "fadeUp 0.4s ease both 0.15s",
             }}
@@ -446,22 +413,9 @@ function PastData() {
                   >
                     {h}
                     {i >= 3 && (
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-around",
-                          marginTop: "4px",
-                        }}
-                      >
+                      <div style={{ display: "flex", justifyContent: "space-around", marginTop: "4px" }}>
                         {["Min", "Avg", "Max"].map((sub) => (
-                          <span
-                            key={sub}
-                            style={{
-                              fontSize: "0.6rem",
-                              color: "#94a3b8",
-                              fontWeight: "500",
-                            }}
-                          >
+                          <span key={sub} style={{ fontSize: "0.6rem", color: "#94a3b8", fontWeight: "500" }}>
                             {sub}
                           </span>
                         ))}
@@ -479,8 +433,7 @@ function PastData() {
                 style={{
                   display: "grid",
                   gridTemplateColumns: "140px 160px 160px 1fr 1fr",
-                  borderBottom:
-                    index < data.length - 1 ? "1px solid #f8fafc" : "none",
+                  borderBottom: index < data.length - 1 ? "1px solid #f8fafc" : "none",
                   background: "#ffffff",
                   animation: `rowIn 0.3s ease both ${index * 40}ms`,
                   transition: "background 0.15s ease",
@@ -495,21 +448,10 @@ function PastData() {
                   }}
                 >
                   <div>
-                    <div
-                      style={{
-                        fontSize: "0.875rem",
-                        fontWeight: "600",
-                        color: "#1e293b",
-                      }}
-                    >
-                      {new Date(day.date).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}
+                    <div style={{ fontSize: "0.875rem", fontWeight: "600", color: "#1e293b" }}>
+                      {new Date(day.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </div>
-                    <div
-                      style={{ fontSize: "0.72rem", color: "#94a3b8" }}
-                    >
+                    <div style={{ fontSize: "0.72rem", color: "#94a3b8" }}>
                       {new Date(day.date).getFullYear()}
                     </div>
                   </div>
@@ -534,15 +476,7 @@ function PastData() {
                     >
                       {day.total_distance?.toFixed(2) ?? "—"}
                     </span>
-                    <span
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "#94a3b8",
-                        marginLeft: "4px",
-                      }}
-                    >
-                      km
-                    </span>
+                    <span style={{ fontSize: "0.75rem", color: "#94a3b8", marginLeft: "4px" }}>km</span>
                   </div>
                 </div>
 
@@ -560,19 +494,12 @@ function PastData() {
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "4px",
-                        background:
-                          day.battery_gain >= 0 ? "#f0fdf4" : "#fef2f2",
+                        background: day.battery_gain >= 0 ? "#f0fdf4" : "#fef2f2",
                         padding: "4px 10px",
                         borderRadius: "6px",
                       }}
                     >
-                      <span
-                        style={{
-                          fontSize: "0.8rem",
-                          color:
-                            day.battery_gain >= 0 ? "#16a34a" : "#dc2626",
-                        }}
-                      >
+                      <span style={{ fontSize: "0.8rem", color: day.battery_gain >= 0 ? "#16a34a" : "#dc2626" }}>
                         {day.battery_gain >= 0 ? "+" : ""}
                       </span>
                       <span
@@ -580,8 +507,7 @@ function PastData() {
                           fontSize: "1rem",
                           fontWeight: "600",
                           fontFamily: "'Roboto Mono', monospace",
-                          color:
-                            day.battery_gain >= 0 ? "#16b895" : "#b91c1c",
+                          color: day.battery_gain >= 0 ? "#16b895" : "#b91c1c",
                         }}
                       >
                         {day.battery_gain?.toFixed(2)}%
@@ -592,22 +518,11 @@ function PastData() {
                   )}
                 </div>
 
-                {/* Motor temp */}
                 <div style={{ borderRight: "1px solid #f1f5f9" }}>
-                  <TempCell
-                    min={day.min_motor_temp}
-                    avg={day.avg_motor_temp}
-                    max={day.max_motor_temp}
-                  />
+                  <TempCell min={day.min_motor_temp} avg={day.avg_motor_temp} max={day.max_motor_temp} />
                 </div>
-
-                {/* Battery temp */}
                 <div>
-                  <TempCell
-                    min={day.min_battery_temp}
-                    avg={day.avg_battery_temp}
-                    max={day.max_battery_temp}
-                  />
+                  <TempCell min={day.min_battery_temp} avg={day.avg_battery_temp} max={day.max_battery_temp} />
                 </div>
               </div>
             ))}
